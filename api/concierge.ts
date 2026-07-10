@@ -1,7 +1,9 @@
 import { products } from '../artifacts/maison-volt/src/data/products';
 
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+function getGeminiUrl() {
+  const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+  return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+}
 
 type ConciergeRequest = {
   message?: string;
@@ -71,7 +73,7 @@ export default async function handler(req: any, res: any) {
   if (!message) return res.status(400).json({ error: 'Message is required' });
   if (message.length > 1000) return res.status(400).json({ error: 'Message is too long' });
 
-  const geminiResponse = await fetch(GEMINI_URL, {
+  const geminiResponse = await fetch(getGeminiUrl(), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
