@@ -59,17 +59,13 @@ export function ProductCard({ product }: ProductCardProps) {
           className="aspect-[4/5] overflow-hidden zoom-image-container cursor-pointer bg-card/30 relative"
           onClick={() => setModalOpen(true)}
         >
-          <div className={`absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent transition-opacity duration-700 z-10 ${
-            isInView ? 'opacity-25' : 'opacity-65'
+          <div className={`pointer-events-none absolute inset-0 z-10 bg-gradient-to-t from-background via-background/30 to-transparent transition-opacity duration-700 ease-out group-hover:opacity-0 ${
+            isInView ? 'opacity-35' : 'opacity-70'
           }`} />
-          <img 
-            src={product.image} 
-            alt={product.name} 
-            className={`w-full h-full object-cover transition-all duration-700 ${
-              isInView
-                ? 'opacity-95 brightness-90 contrast-105 saturate-90'
-                : 'opacity-55 brightness-75 contrast-110 saturate-75'
-            }`}
+          <img
+            src={product.image}
+            alt={product.name}
+            className="w-full h-full object-cover opacity-95 brightness-90 contrast-105 saturate-90"
           />
         </div>
 
