@@ -1,6 +1,7 @@
 import { X, Send, Sparkles, User } from 'lucide-react';
 import { useConcierge } from '@/store/useConcierge';
 import { useState, useRef, useEffect } from 'react';
+import { toast } from '@/hooks/use-toast';
 
 const WAIT_MESSAGES = [
   'Reviewing the product details with care.',
@@ -35,11 +36,49 @@ const WAIT_MESSAGES = [
   'Almost ready with your concierge reply.',
 ];
 
+function playConciergeReadyTone() {
+  const AudioContextCtor = window.AudioContext || (window as Window & {
+    webkitAudioContext?: typeof AudioContext;
+  }).webkitAudioContext;
+
+  if (!AudioContextCtor) return;
+
+  const audio = new AudioContextCtor();
+  const now = audio.currentTime;
+  const masterGain = audio.createGain();
+
+  masterGain.gain.setValueAtTime(0.0001, now);
+  masterGain.gain.exponentialRampToValueAtTime(0.09, now + 0.04);
+  masterGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.25);
+  masterGain.connect(audio.destination);
+
+  [659.25, 880, 1318.51].forEach((frequency, index) => {
+    const start = now + index * 0.12;
+    const oscillator = audio.createOscillator();
+    const gain = audio.createGain();
+
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(frequency, start);
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.exponentialRampToValueAtTime(0.22 / (index + 1), start + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.75);
+    oscillator.connect(gain);
+    gain.connect(masterGain);
+    oscillator.start(start);
+    oscillator.stop(start + 0.8);
+  });
+
+  window.setTimeout(() => {
+    void audio.close();
+  }, 1400);
+}
+
 export function ConciergePanel() {
   const { isOpen, setIsOpen, messages, sendMessage, contextProduct, isResponding } = useConcierge();
   const [input, setInput] = useState('');
   const [waitMessageIndex, setWaitMessageIndex] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const wasRespondingRef = useRef(false);
   const waitMessage = WAIT_MESSAGES[waitMessageIndex];
 
   const scrollToBottom = () => {
@@ -65,6 +104,23 @@ export function ConciergePanel() {
     }, 2800);
 
     return () => window.clearInterval(interval);
+  }, [isResponding]);
+
+  useEffect(() => {
+    if (wasRespondingRef.current && !isResponding) {
+      try {
+        playConciergeReadyTone();
+      } catch {
+        // Sound is a progressive enhancement; browsers may block it.
+      }
+
+      toast({
+        title: 'Concierge reply ready',
+        description: 'Your response has been prepared.',
+      });
+    }
+
+    wasRespondingRef.current = isResponding;
   }, [isResponding]);
 
   if (!isOpen) return null;
