@@ -25,7 +25,7 @@ export function ProductGrid() {
                   <span className="text-xs uppercase tracking-widest text-primary">{categoryProducts.length} Pieces</span>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-[minmax(0,320px)] sm:grid-cols-[repeat(auto-fit,minmax(280px,320px))] justify-center gap-6">
                   {categoryProducts.map((product) => (
                     <ProductCard key={product.id} product={product} />
                   ))}
