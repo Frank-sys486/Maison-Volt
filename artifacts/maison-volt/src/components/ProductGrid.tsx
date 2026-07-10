@@ -22,7 +22,6 @@ export function ProductGrid() {
               <section key={category} id={category.toLowerCase().replace(' ', '-')} className="scroll-mt-32">
                 <div className="flex flex-col items-center gap-3 text-center border-b border-white/10 pb-4 mb-12">
                   <h3 className="text-2xl font-serif">{category}</h3>
-                  <span className="text-xs uppercase tracking-widest text-primary">{categoryProducts.length} Pieces</span>
                 </div>
                 
                 <div className="grid grid-cols-[minmax(0,320px)] sm:grid-cols-[repeat(auto-fit,minmax(280px,320px))] justify-center gap-6">
