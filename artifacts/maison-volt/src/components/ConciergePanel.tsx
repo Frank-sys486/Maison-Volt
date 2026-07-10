@@ -2,10 +2,45 @@ import { X, Send, Sparkles, User } from 'lucide-react';
 import { useConcierge } from '@/store/useConcierge';
 import { useState, useRef, useEffect } from 'react';
 
+const WAIT_MESSAGES = [
+  'Reviewing the product details with care.',
+  'Matching your question to the collection notes.',
+  'Preparing a concise concierge reply.',
+  'Checking the relevant specifications.',
+  'Looking over the product context.',
+  'Refining the answer for clarity.',
+  'Reading the details before responding.',
+  'Comparing your question against the catalog.',
+  'Composing a polished response.',
+  'Verifying the available product information.',
+  'Keeping the answer precise.',
+  'Reviewing compatibility details.',
+  'Distilling the essentials for you.',
+  'Checking the concierge notes.',
+  'Preparing the most useful guidance.',
+  'Aligning the reply with the collection data.',
+  'Reviewing the selected piece.',
+  'Writing a careful recommendation.',
+  'Checking policy and product context.',
+  'Making sure the answer stays accurate.',
+  'Gathering the relevant highlights.',
+  'Preparing a tailored response.',
+  'Reviewing your request thoughtfully.',
+  'Checking the fine details.',
+  'Keeping this concise and useful.',
+  'Looking for the best answer in the catalog.',
+  'Preparing a refined product note.',
+  'Making the response easy to act on.',
+  'Checking the product specifications once more.',
+  'Almost ready with your concierge reply.',
+];
+
 export function ConciergePanel() {
-  const { isOpen, setIsOpen, messages, sendMessage, contextProduct } = useConcierge();
+  const { isOpen, setIsOpen, messages, sendMessage, contextProduct, isResponding } = useConcierge();
   const [input, setInput] = useState('');
+  const [waitMessageIndex, setWaitMessageIndex] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const waitMessage = WAIT_MESSAGES[waitMessageIndex];
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -19,13 +54,24 @@ export function ConciergePanel() {
       document.body.style.overflow = '';
     }
     return () => { document.body.style.overflow = ''; };
-  }, [messages, isOpen]);
+  }, [messages, isOpen, isResponding, waitMessageIndex]);
+
+  useEffect(() => {
+    if (!isResponding) return;
+
+    setWaitMessageIndex(0);
+    const interval = window.setInterval(() => {
+      setWaitMessageIndex((index) => (index + 1) % WAIT_MESSAGES.length);
+    }, 2800);
+
+    return () => window.clearInterval(interval);
+  }, [isResponding]);
 
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() || isResponding) return;
     sendMessage(input.trim());
     setInput('');
   };
@@ -47,7 +93,9 @@ export function ConciergePanel() {
                 <h2 className="font-serif text-lg tracking-wide text-foreground">Product Concierge</h2>
                 <div className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
-                  <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Available</span>
+                  <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    {isResponding ? 'Preparing reply' : 'Available'}
+                  </span>
                 </div>
               </div>
             </div>
@@ -93,6 +141,21 @@ export function ConciergePanel() {
               </div>
             </div>
           ))}
+          {isResponding && (
+            <div className="flex gap-4 animate-fade-in-up">
+              <div className="w-8 h-8 shrink-0 flex items-center justify-center border bg-primary/5 text-primary border-primary/20">
+                <Sparkles size={14} />
+              </div>
+              <div className="max-w-[80%] text-left">
+                <div className="inline-block p-4 text-sm leading-relaxed bg-primary/5 text-foreground/85 border border-primary/10 font-light" aria-live="polite">
+                  <span className="flex items-start gap-2">
+                    <span className="mt-2 w-1.5 h-1.5 shrink-0 rounded-full bg-primary animate-pulse" />
+                    <span>{waitMessage}</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
           <div ref={messagesEndRef} />
         </div>
 
@@ -102,13 +165,15 @@ export function ConciergePanel() {
               type="text" 
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask about details, specs, or tracking..."
-              className="w-full bg-card border border-white/10 pl-4 pr-12 py-4 focus:outline-none focus:border-primary transition-colors text-sm font-light placeholder:text-muted-foreground/50"
+              disabled={isResponding}
+              placeholder={isResponding ? waitMessage : 'Ask about details, specs, or tracking...'}
+              className="w-full bg-card border border-white/10 pl-4 pr-12 py-4 focus:outline-none focus:border-primary transition-colors text-sm font-light placeholder:text-muted-foreground/50 disabled:cursor-not-allowed disabled:opacity-60"
             />
             <button 
               type="submit"
-              disabled={!input.trim()}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-muted-foreground hover:text-primary transition-colors disabled:opacity-30"
+              disabled={!input.trim() || isResponding}
+              aria-label={isResponding ? 'Concierge reply in progress' : 'Send message'}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-muted-foreground hover:text-primary transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             >
               <Send size={18} strokeWidth={1.5} />
             </button>

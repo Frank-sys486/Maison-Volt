@@ -12,6 +12,7 @@ export interface Message {
 interface ConciergeStore {
   isOpen: boolean;
   contextProduct: Product | null;
+  isResponding: boolean;
   messages: Message[];
   setIsOpen: (isOpen: boolean, productContext?: Product | null) => void;
   sendMessage: (text: string) => void;
@@ -79,6 +80,7 @@ function getRuleBasedReply(text: string, get: () => ConciergeStore) {
 export const useConcierge = create<ConciergeStore>((set, get) => ({
   isOpen: false,
   contextProduct: null,
+  isResponding: false,
   messages: [
     {
       id: 'init-1',
@@ -108,38 +110,38 @@ export const useConcierge = create<ConciergeStore>((set, get) => ({
       };
     });
   },
-  sendMessage: async (text) => {
+  sendMessage: (text) => {
+    if (get().isResponding) return;
+
     const userMsg: Message = { id: Date.now().toString(), sender: 'user', text, timestamp: Date.now() };
-    set((state) => ({ messages: [...state.messages, userMsg] }));
+    set((state) => ({ isResponding: true, messages: [...state.messages, userMsg] }));
 
-    setTimeout(() => {
-      void (async () => {
-        let replyText = '';
+    void (async () => {
+      let replyText = '';
 
-        try {
-          const response = await fetch('/api/concierge', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              message: text,
-              contextProduct: get().contextProduct,
-              orders: useOrders.getState().orders,
-            }),
-          });
+      try {
+        const response = await fetch('/api/concierge', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: text,
+            contextProduct: get().contextProduct,
+            orders: useOrders.getState().orders,
+          }),
+        });
 
-          if (response.ok) {
-            const data = await response.json() as { reply?: string };
-            replyText = data.reply?.trim() || '';
-          }
-        } catch {
-          replyText = '';
+        if (response.ok) {
+          const data = await response.json() as { reply?: string };
+          replyText = data.reply?.trim() || '';
         }
+      } catch {
+        replyText = '';
+      }
 
-        if (!replyText) replyText = getRuleBasedReply(text, get);
+      if (!replyText) replyText = getRuleBasedReply(text, get);
 
-        const conciergeMsg: Message = { id: Date.now().toString() + '-reply', sender: 'concierge', text: replyText, timestamp: Date.now() };
-        set((state) => ({ messages: [...state.messages, conciergeMsg] }));
-      })();
-    }, 800);
+      const conciergeMsg: Message = { id: Date.now().toString() + '-reply', sender: 'concierge', text: replyText, timestamp: Date.now() };
+      set((state) => ({ isResponding: false, messages: [...state.messages, conciergeMsg] }));
+    })();
   }
 }));
