@@ -1,7 +1,7 @@
 import { Product } from '@/data/products';
 import { Sparkles, ArrowRight } from 'lucide-react';
 import { useConcierge } from '@/store/useConcierge';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ProductModal } from './ProductModal';
 
 interface ProductCardProps {
@@ -10,11 +10,34 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const { setIsOpen: openConcierge } = useConcierge();
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [isInView, setIsInView] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+
+  useEffect(() => {
+    const card = cardRef.current;
+    if (!card) return;
+
+    if (!('IntersectionObserver' in window)) {
+      setIsInView(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsInView(entry.isIntersecting && entry.intersectionRatio >= 0.35),
+      {
+        threshold: [0, 0.35],
+        rootMargin: '-10% 0px -20% 0px',
+      },
+    );
+
+    observer.observe(card);
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <>
-      <div className="group relative flex flex-col bg-background/50 border border-white/5 hover:border-primary/30 transition-all duration-700 reveal-border">
+      <div ref={cardRef} className="group relative flex flex-col bg-background/50 border border-white/5 hover:border-primary/30 transition-all duration-700 reveal-border">
         {product.badge && (
           <div className="absolute top-4 left-4 z-10 bg-primary text-primary-foreground text-[10px] uppercase tracking-widest px-3 py-1 font-medium shadow-lg">
             {product.badge}
@@ -36,11 +59,17 @@ export function ProductCard({ product }: ProductCardProps) {
           className="aspect-[4/5] overflow-hidden zoom-image-container cursor-pointer bg-card/30 relative"
           onClick={() => setModalOpen(true)}
         >
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent opacity-60 z-0" />
+          <div className={`absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent transition-opacity duration-700 z-10 ${
+            isInView ? 'opacity-25' : 'opacity-65'
+          }`} />
           <img 
             src={product.image} 
             alt={product.name} 
-            className="w-full h-full object-cover mix-blend-lighten opacity-80 group-hover:opacity-100 transition-opacity duration-700 relative z-[-1]"
+            className={`w-full h-full object-cover transition-all duration-700 ${
+              isInView
+                ? 'opacity-95 brightness-90 contrast-105 saturate-90'
+                : 'opacity-55 brightness-75 contrast-110 saturate-75'
+            }`}
           />
         </div>
 
