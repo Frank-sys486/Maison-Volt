@@ -60,7 +60,7 @@ export function ProductCard({ product }: ProductCardProps) {
           onClick={() => setModalOpen(true)}
         >
           <div className={`pointer-events-none absolute inset-0 z-10 bg-gradient-to-t from-background via-background/30 to-transparent transition-opacity duration-700 ease-out group-hover:opacity-0 ${
-            isInView ? 'opacity-35' : 'opacity-70'
+            isInView ? 'opacity-35' : 'opacity-100'
           }`} />
           <img
             src={product.image}
