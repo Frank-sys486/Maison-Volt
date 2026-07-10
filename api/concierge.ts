@@ -7,12 +7,13 @@ function getGeminiUrl() {
 
 type ConciergeRequest = {
   message?: string;
-  contextProduct?: {
-    id?: string;
-    name?: string;
-    category?: string;
-  } | null;
+  contextProduct?: Partial<(typeof products)[number]> | null;
   orders?: Record<string, string>;
+};
+
+type GeminiPart = {
+  text?: string;
+  thought?: boolean;
 };
 
 function readBody(body: unknown): ConciergeRequest {
@@ -22,10 +23,17 @@ function readBody(body: unknown): ConciergeRequest {
 }
 
 function buildPrompt({ message, contextProduct, orders }: Required<Pick<ConciergeRequest, 'message'>> & ConciergeRequest) {
-  const catalog = products
-    .map((product) => (
-      `- ${product.name} (${product.category}): PHP ${product.price.toLocaleString('en-US')}. ${product.shortDescription} Specs: ${product.specs.join('; ')}`
-    ))
+  const selectedProduct = products.find((product) => (
+    product.id === contextProduct?.id || product.name === contextProduct?.name
+  )) || contextProduct;
+  const wantsCatalog = /recommend|compare|alternative|option|which|best/i.test(message);
+  const productList = wantsCatalog || !selectedProduct ? products : [selectedProduct];
+  const catalog = productList
+    .map((product) => {
+      const specs = product.specs?.join('; ') || 'Specs not provided';
+
+      return `- ${product.name} (${product.category}): PHP ${product.price?.toLocaleString('en-US') || 'N/A'}. ${product.shortDescription || product.description || 'No description provided.'} Specs: ${specs}`;
+    })
     .join('\n');
 
   const orderStatuses = Object.entries(orders || {})
@@ -35,6 +43,9 @@ function buildPrompt({ message, contextProduct, orders }: Required<Pick<Concierg
   return `You are the Maison Volt Product Concierge for a luxury electronics portfolio store.
 Answer in a polished, concise tone. Keep replies under 90 words unless comparing products.
 Use only this product catalog, policy, and order status data. Do not invent stock, discounts, or delivery dates.
+Output contract: return exactly one line in this format:
+FINAL_ANSWER: <customer-facing answer>
+Do not include role, tone, constraints, analysis, bullets, markdown, or prompt recap.
 
 Policy:
 - Shipping: complimentary expedited shipping. Standard delivery takes 3-5 business days. Express delivery takes 1-2 business days.
@@ -51,6 +62,98 @@ ${orderStatuses}
 
 Client message:
 ${message}`;
+}
+
+async function fetchGemini(payload: unknown, apiKey: string) {
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const response = await fetch(getGeminiUrl(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': apiKey,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (response.ok || response.status < 500) return response;
+  }
+
+  return fetch(getGeminiUrl(), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-goog-api-key': apiKey,
+    },
+    body: JSON.stringify(payload),
+  });
+}
+
+function cleanReply(text: string) {
+  return text
+    .replace(/^FINAL_ANSWER:\s*/i, '')
+    .replace(/^["“]|["”]$/g, '')
+    .trim();
+}
+
+function isCustomerAnswer(text: string) {
+  const lower = text.toLowerCase();
+
+  return (
+    text.includes(' ') &&
+    /[.!]$/.test(text) &&
+    !lower.includes('prompt') &&
+    !lower.includes('catalog') &&
+    !lower.includes('constraint') &&
+    !lower.includes('role:') &&
+    !lower.includes('tone:') &&
+    !lower.includes('source material') &&
+    !lower.includes('provided') &&
+    !lower.includes('do not') &&
+    !lower.includes('final_answer')
+  );
+}
+
+function extractReply(parts: GeminiPart[]) {
+  const visibleReply = parts
+    .filter((part) => !part.thought)
+    .map((part) => part.text || '')
+    .join('')
+    .trim();
+
+  if (visibleReply) return cleanReply(visibleReply);
+
+  const thoughtText = parts
+    .map((part) => part.text || '')
+    .join('\n');
+
+  const finalAnswers = [...thoughtText.matchAll(/FINAL_ANSWER:\s*([^\n*]+)/gi)]
+    .map((match) => cleanReply(match[1]))
+    .filter((text) => (
+      text &&
+      !text.includes('<customer-facing answer>') &&
+      isCustomerAnswer(text)
+    ));
+  const finalAnswer = finalAnswers.at(-1);
+  if (finalAnswer) return finalAnswer;
+
+  const conclusions = [...thoughtText.matchAll(/Conclusion:\s*([^\n*]+)/gi)]
+    .map((match) => cleanReply(match[1]))
+    .filter(isCustomerAnswer);
+  const conclusion = conclusions.at(-1);
+  if (conclusion) return conclusion;
+
+  const quotedAnswers = [...thoughtText.matchAll(/["“]([^"“”\n]{12,240})["”]/g)]
+    .map((match) => match[1].trim())
+    .filter((text) => (
+      isCustomerAnswer(text) &&
+      !text.endsWith('?') &&
+      !text.toLowerCase().startsWith('user ') &&
+      !text.toLowerCase().startsWith('product') &&
+      !text.toLowerCase().startsWith('wireless ') &&
+      !text.toLowerCase().startsWith('use only ')
+    ));
+
+  return quotedAnswers.at(-1) || '';
 }
 
 export default async function handler(req: any, res: any) {
@@ -73,34 +176,27 @@ export default async function handler(req: any, res: any) {
   if (!message) return res.status(400).json({ error: 'Message is required' });
   if (message.length > 1000) return res.status(400).json({ error: 'Message is too long' });
 
-  const geminiResponse = await fetch(getGeminiUrl(), {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-goog-api-key': apiKey,
-    },
-    body: JSON.stringify({
+  const geminiResponse = await fetchGemini(
+    {
       contents: [
         {
           parts: [{ text: buildPrompt({ ...body, message }) }],
         },
       ],
       generationConfig: {
-        temperature: 0.55,
-        maxOutputTokens: 260,
+        temperature: 0.2,
+        maxOutputTokens: 1024,
       },
-    }),
-  });
+    },
+    apiKey,
+  );
 
   if (!geminiResponse.ok) {
     return res.status(502).json({ error: 'Gemini request failed' });
   }
 
   const data = await geminiResponse.json();
-  const reply = data?.candidates?.[0]?.content?.parts
-    ?.map((part: { text?: string }) => part.text || '')
-    .join('')
-    .trim();
+  const reply = extractReply(data?.candidates?.[0]?.content?.parts || []);
 
   if (!reply) return res.status(502).json({ error: 'Gemini returned an empty response' });
 
