@@ -48,7 +48,7 @@ function playConciergeReadyTone() {
   const masterGain = audio.createGain();
 
   masterGain.gain.setValueAtTime(0.0001, now);
-  masterGain.gain.exponentialRampToValueAtTime(0.09, now + 0.04);
+  masterGain.gain.exponentialRampToValueAtTime(1, now + 0.04);
   masterGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.25);
   masterGain.connect(audio.destination);
 
