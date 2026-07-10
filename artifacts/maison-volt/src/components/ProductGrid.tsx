@@ -20,7 +20,7 @@ export function ProductGrid() {
 
             return (
               <section key={category} id={category.toLowerCase().replace(' ', '-')} className="scroll-mt-32">
-                <div className="flex items-end justify-between border-b border-white/10 pb-4 mb-12">
+                <div className="flex flex-col items-center gap-3 text-center border-b border-white/10 pb-4 mb-12">
                   <h3 className="text-2xl font-serif">{category}</h3>
                   <span className="text-xs uppercase tracking-widest text-primary">{categoryProducts.length} Pieces</span>
                 </div>
