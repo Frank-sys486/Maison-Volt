@@ -1,0 +1,216 @@
+Build a complete luxury e-commerce portfolio showcase website in one single `index.html` file.
+
+Project name: Maison Volt
+
+Goal:
+Create a premium e-commerce website that feels like a real high-end online store. The site should focus on luxury shopping, clean product presentation, smooth interactions, and a discreet product-level concierge chat feature. The concierge should be available from each product, but the website should not feel like an AI-first website.
+
+Technical requirements:
+- Use only HTML, CSS, and vanilla JavaScript.
+- Everything must be inside one `index.html` file.
+- No external frameworks.
+- No backend.
+- No real payment system.
+- No real AI API.
+- Use mock product data and scripted JavaScript responses.
+- The website must run directly in the browser.
+
+Design direction:
+- Luxury dark editorial e-commerce style.
+- Sharp corners, not rounded.
+- Minimal, premium, polished layout.
+- Use thin borders, refined spacing, elegant typography, and smooth animations.
+- Avoid playful visuals.
+- Avoid emoji.
+- Avoid bubbly UI.
+- Avoid loud neon effects.
+- Make it feel like a luxury fashion or premium technology store.
+
+Color palette:
+- Background: #080808
+- Surface: #111111
+- Card: #151515
+- Border: #2a2a2a
+- Primary text: #f5f2ea
+- Secondary text: #aaa49a
+- Accent: #c9a86a
+- Accent dark: #8f7445
+
+Typography:
+- Use Playfair Display for headings.
+- Use Inter for body and UI text.
+- Import fonts using Google Fonts.
+
+Website sections:
+1. Header
+   - Brand name: Maison Volt
+   - Navigation links
+   - Cart button
+   - Responsive mobile behavior
+
+2. Hero section
+   - Luxury editorial headline
+   - Short brand statement
+   - Primary CTA
+   - Secondary CTA
+   - Premium product visual area
+   - Subtle motion effect
+
+3. Featured collection
+   - Highlight premium products
+   - Elegant product cards
+   - Each product card has a discreet product concierge icon/button
+
+4. Categories
+   - Laptops
+   - Smartphones
+   - Audio
+   - Desk Setup
+   - Smart Home
+   - Travel Tech
+
+5. Product listing
+   Each product card must include:
+   - Product image or premium visual placeholder
+   - Product name
+   - Category
+   - Price
+   - Rating
+   - Short description
+   - Add to cart button
+   - View details button
+   - Product concierge icon/button
+
+6. Product detail modal
+   Include:
+   - Product visual
+   - Product name
+   - Price
+   - Category
+   - Stock status
+   - Description
+   - Specifications
+   - Warranty
+   - Add to cart button
+   - Product Concierge button
+
+7. Cart drawer
+   Include:
+   - Cart items
+   - Quantity controls
+   - Remove item
+   - Subtotal
+   - Checkout button
+   - Empty cart state
+
+8. Checkout modal
+   Include:
+   - Full name
+   - Email
+   - Address
+   - Delivery method
+   - Payment method mockup
+   - Place order button
+   - Generate a mock order ID after checkout
+
+9. Product Concierge chat
+   - Opens from any product card.
+   - Opens from product detail modal.
+   - Uses the selected product as context.
+   - Header should say “Product Concierge”.
+   - If opened from a product, show “Assistance for [Product Name]”.
+   - It should answer product questions, recommendations, comparisons, shipping, returns, warranty, and order tracking.
+
+Product lineup:
+1. NovaBook Atelier 14
+   - Category: Laptop
+   - Price: ₱74,990
+   - Specs: 16GB RAM, 1TB SSD, 14-inch OLED display, 12-hour battery
+   - Best for programming, school, productivity, and premium daily use
+
+2. VantaPhone X1
+   - Category: Smartphone
+   - Price: ₱52,990
+   - Specs: 256GB storage, AMOLED display, flagship camera, fast charging
+   - Best for photography, social media, and premium mobile experience
+
+3. Aurum Wireless Headphones
+   - Category: Audio
+   - Price: ₱18,990
+   - Specs: Active noise cancellation, 40-hour battery, spatial audio
+   - Best for studying, travel, music, and focus
+
+4. Obsidian Mechanical Keyboard
+   - Category: Desk Setup
+   - Price: ₱9,990
+   - Specs: Aluminum frame, hot-swappable switches, white backlight
+   - Best for coding, writing, and productivity desk setup
+
+5. LuxeDock USB-C Hub
+   - Category: Desk Setup
+   - Price: ₱6,490
+   - Specs: HDMI, USB-C PD, SD card reader, USB-A ports
+   - Best for laptop expansion and workstation setup
+
+6. Noir Smart Speaker
+   - Category: Smart Home
+   - Price: ₱12,990
+   - Specs: Voice control, room-filling sound, smart home integration
+   - Best for home automation and music
+
+7. Monolith 4K Monitor
+   - Category: Desk Setup
+   - Price: ₱32,990
+   - Specs: 27-inch 4K panel, HDR, USB-C display input
+   - Best for design, coding, productivity, and multitasking
+
+8. Axis Travel Charger
+   - Category: Travel Tech
+   - Price: ₱4,990
+   - Specs: 100W GaN charging, 4 ports, compact body
+   - Best for travel, students, and multiple-device charging
+
+Chat logic:
+- If the message includes “shipping” or “delivery”, answer with shipping policy.
+- If the message includes “return” or “refund”, answer with return policy.
+- If the message includes “warranty”, answer with warranty information.
+- If the message includes “track” or an order ID, return a mock order status.
+- If the message includes “recommend”, suggest products based on the user’s need.
+- If the message mentions two products, compare them.
+- If a product context exists, answer based on that product’s specs.
+
+Mock policies:
+- Standard delivery: 3–5 business days.
+- Express delivery: 1–2 business days.
+- Returns: accepted within 7 days for damaged, defective, or incorrect items.
+- Warranty: 1-year limited warranty for all products.
+- Mock order examples:
+  - ORD-2026-4921: Out for delivery
+  - ORD-2026-1834: Processing
+  - ORD-2026-7750: Delivered
+
+Animation requirements:
+- Smooth scroll.
+- Fade-in sections on scroll.
+- Product card reveal animation.
+- Slow image zoom on hover.
+- Thin border reveal on hover.
+- Cart drawer slide-in.
+- Chat panel slide-in.
+- Product modal fade and scale.
+- Button underline animation.
+- Subtle hero parallax.
+- Animations should feel refined and expensive, not playful.
+
+Responsive requirements:
+- Desktop, tablet, and mobile support.
+- Product grid should adapt from 4 columns to 2 columns to 1 column.
+- Cart drawer and chat panel should work well on mobile.
+- Header should remain clean on smaller screens.
+
+Important:
+- Do not use emoji anywhere.
+- Do not use rounded bubbly cards.
+- Do not make the website look like a chatbot demo.
+- Prioritize e-commerce luxury experience.
+- Make the final code clean, readable, and presentation-ready.

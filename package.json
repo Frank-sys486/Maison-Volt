@@ -1,0 +1,26 @@
+{
+  "name": "workspace",
+  "version": "0.0.0",
+  "license": "MIT",
+  "packageManager": "npm@11.11.0",
+  "workspaces": [
+    "artifacts/*",
+    "lib/*",
+    "lib/integrations/*",
+    "scripts"
+  ],
+  "scripts": {
+    "dev": "npm run dev:local --workspace=@workspace/maison-volt",
+    "build": "npm run build --workspace=@workspace/maison-volt",
+    "preview": "npm run serve:local --workspace=@workspace/maison-volt",
+    "typecheck:libs": "tsc --build",
+    "typecheck": "npm run typecheck --workspace=@workspace/maison-volt",
+    "build:all": "npm run typecheck:all && npm run build --workspaces --if-present",
+    "typecheck:all": "npm run typecheck:libs && npm run typecheck --workspaces --if-present"
+  },
+  "private": true,
+  "devDependencies": {
+    "prettier": "^3.9.4",
+    "typescript": "~5.9.3"
+  }
+}
