@@ -1,4 +1,14 @@
-import { products } from '../artifacts/maison-volt/src/data/products';
+/// <reference types="node" />
+
+type Product = {
+  id?: string;
+  name?: string;
+  category?: string;
+  price?: number;
+  description?: string;
+  shortDescription?: string;
+  specs?: string[];
+};
 
 function getGeminiUrl() {
   const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
@@ -7,7 +17,7 @@ function getGeminiUrl() {
 
 type ConciergeRequest = {
   message?: string;
-  contextProduct?: Partial<(typeof products)[number]> | null;
+  contextProduct?: Product | null;
   orders?: Record<string, string>;
 };
 
@@ -22,7 +32,16 @@ function readBody(body: unknown): ConciergeRequest {
   return {};
 }
 
-function buildPrompt({ message, contextProduct, orders }: Required<Pick<ConciergeRequest, 'message'>> & ConciergeRequest) {
+async function getProducts(): Promise<Product[]> {
+  const module = await import('../artifacts/maison-volt/src/data/products.js');
+
+  return module.products;
+}
+
+function buildPrompt(
+  { message, contextProduct, orders }: Required<Pick<ConciergeRequest, 'message'>> & ConciergeRequest,
+  products: Product[],
+) {
   const selectedProduct = products.find((product) => (
     product.id === contextProduct?.id || product.name === contextProduct?.name
   )) || contextProduct;
@@ -107,7 +126,6 @@ function isCustomerAnswer(text: string) {
     !lower.includes('role:') &&
     !lower.includes('tone:') &&
     !lower.includes('source material') &&
-    !lower.includes('provided') &&
     !lower.includes('do not') &&
     !lower.includes('final_answer')
   );
@@ -135,6 +153,14 @@ function extractReply(parts: GeminiPart[]) {
     ));
   const finalAnswer = finalAnswers.at(-1);
   if (finalAnswer) return finalAnswer;
+
+  const draftAnswers = [
+    ...thoughtText.matchAll(/(?:Draft \d+(?:\s*\([^)]+\))?|Refined Answer|Alternative):\s*([^\n*]+)/gi),
+  ]
+    .map((match) => cleanReply(match[1]))
+    .filter(isCustomerAnswer);
+  const draftAnswer = draftAnswers.at(-1);
+  if (draftAnswer) return draftAnswer;
 
   const conclusions = [...thoughtText.matchAll(/Conclusion:\s*([^\n*]+)/gi)]
     .map((match) => cleanReply(match[1]))
@@ -180,12 +206,12 @@ export default async function handler(req: any, res: any) {
     {
       contents: [
         {
-          parts: [{ text: buildPrompt({ ...body, message }) }],
+          parts: [{ text: buildPrompt({ ...body, message }, await getProducts()) }],
         },
       ],
       generationConfig: {
         temperature: 0.2,
-        maxOutputTokens: 1024,
+        maxOutputTokens: 2048,
       },
     },
     apiKey,
@@ -195,7 +221,7 @@ export default async function handler(req: any, res: any) {
     return res.status(502).json({ error: 'Gemini request failed' });
   }
 
-  const data = await geminiResponse.json();
+  const data: any = await geminiResponse.json();
   const reply = extractReply(data?.candidates?.[0]?.content?.parts || []);
 
   if (!reply) return res.status(502).json({ error: 'Gemini returned an empty response' });
